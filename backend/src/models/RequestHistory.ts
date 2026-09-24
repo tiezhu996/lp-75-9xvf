@@ -6,6 +6,11 @@ export interface IHistoryHeader {
   enabled: boolean;
 }
 
+export interface IResolvedVariable {
+  key: string;
+  value: string;
+}
+
 export interface IResponseData {
   status: number;
   statusText: string;
@@ -20,6 +25,8 @@ export interface IRequestHistory extends Document {
   url: string;
   headers: IHistoryHeader[];
   body?: string;
+  environmentName?: string;
+  resolvedVariables?: IResolvedVariable[];
   response?: IResponseData;
   createdAt: Date;
 }
@@ -50,6 +57,16 @@ const RequestHistorySchema: Schema = new Schema(
     body: {
       type: String,
     },
+    environmentName: {
+      type: String,
+      trim: true,
+    },
+    resolvedVariables: [
+      {
+        key: { type: String, trim: true },
+        value: { type: String },
+      },
+    ],
     response: {
       status: { type: Number },
       statusText: { type: String },

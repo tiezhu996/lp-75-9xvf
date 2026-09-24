@@ -40,7 +40,7 @@ import {
   deleteEndpoint,
 } from '../api/endpoints';
 import { sendRequest } from '../api/proxy';
-import { replaceEnvVariables } from '../utils/environment';
+import { resolveRequestConfig } from '../utils/environment';
 import { tryFormatJson, isValidJson } from '../utils/json';
 
 const { Content } = Layout;
@@ -163,18 +163,37 @@ const RequestPanel = ({
       return;
     }
 
+    // URL、Header、Body 三处的 {{变量}} 都按当前环境替换；
+    // 只要有变量缺值就提示名称并停止发送（不产生历史）。
+    const result = resolveRequestConfig(url, headers, body, activeEnvironment);
+    if (!result.success) {
+      message.error(
+        `环境变量缺值：${result.missing
+          .map((name) => `{{${name}}}`)
+          .join('、')}，请先在环境管理中配置`
+      );
+      return;
+    }
+
     try {
       setSending(true);
-      const resolvedUrl = replaceEnvVariables(url, activeEnvironment);
+      const { resolved } = result;
 
-      const result = await sendRequest({
+      const requestResult = await sendRequest({
         method,
-        url: resolvedUrl,
-        headers,
-        body,
+        url: resolved.url,
+        headers: resolved.headers,
+        body: resolved.body,
+        environmentName: activeEnvironment?.name,
+        resolvedVariables: resolved.usedVariables,
+        template: {
+          url,
+          headers,
+          body,
+        },
       });
 
-      setResponse(result);
+      setResponse(requestResult);
       message.success('请求完成');
     } catch {
     } finally {

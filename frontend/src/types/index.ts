@@ -78,6 +78,8 @@ export interface RequestHistory {
   url: string;
   headers: Header[];
   body?: string;
+  environmentName?: string;
+  resolvedVariables?: EnvVariable[];
   response?: {
     status: number;
     statusText: string;
@@ -93,4 +95,11 @@ export interface RequestConfig {
   url: string;
   headers: Header[];
   body?: string;
+  environmentName?: string;
+  resolvedVariables?: EnvVariable[];
+  template?: {
+    url: string;
+    headers: Header[];
+    body?: string;
+  };
 }

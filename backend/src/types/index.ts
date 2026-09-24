@@ -25,11 +25,25 @@ export interface HeaderItem {
   enabled: boolean;
 }
 
+export interface VariableItem {
+  key: string;
+  value: string;
+}
+
+export interface RequestTemplate {
+  url: string;
+  headers: HeaderItem[];
+  body?: string;
+}
+
 export interface ProxyRequestData {
   method: HttpMethod;
   url: string;
   headers: HeaderItem[];
   body?: string;
+  environmentName?: string;
+  resolvedVariables?: VariableItem[];
+  template?: RequestTemplate;
 }
 
 export interface ProxyResponse {

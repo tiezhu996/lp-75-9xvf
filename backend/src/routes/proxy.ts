@@ -14,7 +14,15 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    const { method, url, headers, body } = req.body as ProxyRequestData;
+    const {
+      method,
+      url,
+      headers,
+      body,
+      environmentName,
+      resolvedVariables,
+      template,
+    } = req.body as ProxyRequestData;
 
     if (!method || !url) {
       res.status(400).json({
@@ -26,12 +34,16 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
 
     const response = await proxyRequest({ method, url, headers, body });
 
+    // 历史保留原始模板（含 {{变量}} 占位符）以及本次环境名和替换值快照，
+    // 这样切换环境后可直接用模板重放，即使环境被删除快照仍可查看。
     const history = new RequestHistory({
       userId: req.user._id,
       method,
-      url,
-      headers,
-      body,
+      url: template?.url ?? url,
+      headers: template?.headers ?? headers,
+      body: template?.body ?? body,
+      environmentName,
+      resolvedVariables,
       response,
     });
 

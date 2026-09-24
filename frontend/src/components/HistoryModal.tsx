@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal, Input, List, Tag, Button, message, Space, Typography, Empty, Popconfirm } from 'antd';
+import { Modal, Input, List, Tag, Button, message, Space, Typography, Empty, Popconfirm, Popover } from 'antd';
 import { SearchOutlined, DeleteOutlined, ReloadOutlined, ClearOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { RequestHistory as RequestHistoryType, Header } from '../types';
@@ -51,6 +51,7 @@ const HistoryModal = ({ visible, onClose, onRestore }: HistoryModalProps) => {
   };
 
   const handleRestore = (item: RequestHistoryType) => {
+    // item 中保存的是原始模板（含 {{变量}} 占位符），恢复时按当前环境重新替换发送
     onRestore({
       method: item.method,
       url: item.url,
@@ -58,7 +59,7 @@ const HistoryModal = ({ visible, onClose, onRestore }: HistoryModalProps) => {
       body: item.body,
     });
     onClose();
-    message.success('已恢复请求配置');
+    message.success('已恢复请求模板，将按当前环境替换变量后发送');
   };
 
   const handleDelete = async (id: string) => {
@@ -155,10 +156,33 @@ const HistoryModal = ({ visible, onClose, onRestore }: HistoryModalProps) => {
                     </Space>
                   }
                   description={
-                    <Space>
+                    <Space size={[8, 4]} wrap>
                       <Text type="secondary">
                         {dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')}
                       </Text>
+                      {item.environmentName && (
+                        <Tag color="green">环境: {item.environmentName}</Tag>
+                      )}
+                      {item.resolvedVariables && item.resolvedVariables.length > 0 && (
+                        <Popover
+                          title="本次替换值（快照）"
+                          content={
+                            <div style={{ maxWidth: 320 }}>
+                              {item.resolvedVariables.map((variable) => (
+                                <div key={variable.key} style={{ marginBottom: 4 }}>
+                                  <Text code>{`{{${variable.key}}}`}</Text>
+                                  <Text type="secondary"> = </Text>
+                                  <Text copyable={{ text: variable.value }}>{variable.value}</Text>
+                                </div>
+                              ))}
+                            </div>
+                          }
+                        >
+                          <Tag color="blue" style={{ cursor: 'pointer' }}>
+                            变量快照 ({item.resolvedVariables.length})
+                          </Tag>
+                        </Popover>
+                      )}
                       {item.response && (
                         <Tag
                           color={
