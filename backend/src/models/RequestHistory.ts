@@ -14,12 +14,27 @@ export interface IResponseData {
   duration: number;
 }
 
+export interface IEnvSnapshot {
+  id?: string;
+  name: string;
+}
+
+export interface IResolvedSnapshot {
+  url: string;
+  headers: IHistoryHeader[];
+  body?: string;
+}
+
 export interface IRequestHistory extends Document {
   userId: mongoose.Types.ObjectId;
   method: string;
   url: string;
   headers: IHistoryHeader[];
   body?: string;
+  /** 本次实际发送使用的替换值快照 */
+  resolved?: IResolvedSnapshot;
+  /** 发送时所选环境（名称为快照，环境删除后仍保留） */
+  environment?: IEnvSnapshot;
   response?: IResponseData;
   createdAt: Date;
 }
@@ -49,6 +64,21 @@ const RequestHistorySchema: Schema = new Schema(
     ],
     body: {
       type: String,
+    },
+    resolved: {
+      url: { type: String },
+      headers: [
+        {
+          key: { type: String, trim: true },
+          value: { type: String, trim: true },
+          enabled: { type: Boolean, default: true },
+        },
+      ],
+      body: { type: String },
+    },
+    environment: {
+      id: { type: Schema.Types.ObjectId },
+      name: { type: String },
     },
     response: {
       status: { type: Number },
